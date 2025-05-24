@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "935168308538",
+    "project_id": "monchi-ai-companion-app-43b1a",
+    "storage_bucket": "monchi-ai-companion-app-43b1a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:935168308538:android:9b4d6da01bd2af56930c03",
+        "android_client_info": {
+          "package_name": "com.example.monchi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq5Z6C0tJzXiuxA8Yo5LG8PjSUkobJtkY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:935168308538:android:3147401f347a9f15930c03",
+        "android_client_info": {
+          "package_name": "com.example.monchi_ai_companion_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAq5Z6C0tJzXiuxA8Yo5LG8PjSUkobJtkY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
