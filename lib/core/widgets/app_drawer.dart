@@ -1,7 +1,27 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  String? _profileImagePath;
+  String _userInitials = 'U'; // Replace with actual initials if available
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImagePath = pickedFile.path;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,24 +29,34 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Colors.blue),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: AssetImage('assets/images/mochi_avatar.jpg'),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: _profileImagePath != null
+                      ? CircleAvatar(
+                          radius: 40,
+                          backgroundImage: FileImage(File(_profileImagePath!)),
+                        )
+                      : CircleAvatar(
+                          radius: 40,
+                          child: Text(
+                            _userInitials,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              color: Colors.white,
+                            ),
+                          ),
+                          backgroundColor: Colors.deepPurple,
+                        ),
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'Mochi AI',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
+                const SizedBox(height: 10),
+                const Text(
+                  '~username',
+                  style: TextStyle(color: Colors.white, fontSize: 24),
                 ),
               ],
             ),
@@ -59,6 +89,20 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/settings');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: const Text('Schedule'),
+            onTap: () {
+              Navigator.pushNamed(context, '/schedule');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About'),
+            onTap: () {
+              Navigator.pushNamed(context, '/about');
+            },
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),
@@ -67,10 +111,9 @@ class AppDrawer extends StatelessWidget {
               try {
                 // await AuthRepository().signOut();
                 if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/log-in',
-                    (route) => false,
-                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/log-in', (route) => false);
                 }
               } catch (e) {
                 if (context.mounted) {

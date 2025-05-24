@@ -20,7 +20,7 @@ class AboutPage extends StatelessWidget {
           children: [
             Center(
               child: Image.asset(
-                'assets/images/mochi_avatar.jpeg',
+                'assets/images/monchi_avatar.png',
                 height: 120,
               ),
             ),

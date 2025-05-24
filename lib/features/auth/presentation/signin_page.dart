@@ -31,7 +31,7 @@ class _SigninPageState extends State<SigninPage> {
             children: [
               const SizedBox(height: 30),
               const Text(
-                "Welcome Back 👋",
+                "Welcome Back",
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),

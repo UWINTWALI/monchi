@@ -16,10 +16,13 @@ import 'main_navigation.dart';
 import 'package:provider/provider.dart';
 import 'core/settings/settings_provider.dart';
 import 'features/about/about_page.dart';
+import 'features/schedule/presentation/schedule_page.dart';
+import 'core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 
@@ -38,13 +41,17 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
               primarySwatch: Colors.pink,
               scaffoldBackgroundColor: Colors.white,
-              textTheme: Theme.of(
-                context,
-              ).textTheme.apply(fontSizeFactor: settings.fontSize / 16.0),
+              textTheme: settings.getAdjustedTextTheme(
+                ThemeData.light().textTheme,
+              ),
             ),
             darkTheme: ThemeData.dark().copyWith(
-              textTheme: ThemeData.dark().textTheme.apply(
-                fontSizeFactor: settings.fontSize / 16.0,
+              colorScheme: ColorScheme.dark(
+                primary: Colors.pink,
+                secondary: Colors.pinkAccent,
+              ),
+              textTheme: settings.getAdjustedTextTheme(
+                ThemeData.dark().textTheme,
               ),
             ),
             themeMode: settings.themeMode,
@@ -63,6 +70,7 @@ class MyApp extends StatelessWidget {
               '/profile': (_) => const ProfilePage(),
               '/settings': (_) => const SettingsPage(),
               '/about': (_) => const AboutPage(),
+              '/schedule': (_) => const SchedulePage(),
             },
           );
         },
