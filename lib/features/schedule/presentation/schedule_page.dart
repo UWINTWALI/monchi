@@ -18,6 +18,32 @@ class Schedule {
     required this.completion,
     this.comment,
   });
+
+  factory Schedule.fromJson(Map<String, dynamic> json) {
+    final startDate = DateTime.parse(json['startDate']);
+    final endDate = DateTime.parse(json['endDate']);
+    final days = endDate.difference(startDate).inDays + 1;
+
+    return Schedule(
+      title: json['title'] ?? '',
+      startDate: startDate,
+      endDate: endDate,
+      completion: List<bool>.from(
+        json['completion'] ?? List.filled(days, false),
+      ),
+      comment: json['comment'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
+      'completion': completion,
+      'comment': comment,
+    };
+  }
 }
 
 class SchedulePage extends StatefulWidget {
@@ -41,22 +67,28 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Future<void> _fetchSchedules() async {
     setState(() => _loading = true);
-    final snapshot = await _firestoreService.scheduleRef.get();
-    _schedules.clear();
-    _scheduleIds.clear();
-    for (var doc in snapshot.docs) {
-      _schedules.add(
-        ScheduleFirestoreService.fromMap(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-        ),
-      );
-      _scheduleIds.add(doc.id);
+    try {
+      final snapshot = await _firestoreService.scheduleRef.get();
+      setState(() {
+        _schedules.clear();
+        _scheduleIds.clear();
+        for (var doc in snapshot.docs) {
+          _schedules.add(ScheduleFirestoreService.fromFirestore(doc));
+          _scheduleIds.add(doc.id);
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading schedules: $e')));
+      }
+    } finally {
+      setState(() => _loading = false);
     }
-    setState(() => _loading = false);
   }
 
-  void _addOrEditSchedule({Schedule? existing, int? index}) async {
+  void _addOrEditSchedule({Schedule? existing, String? id}) async {
     final titleController = TextEditingController(text: existing?.title);
     final commentController = TextEditingController(text: existing?.comment);
     DateTime? startDate = existing?.startDate;
@@ -168,10 +200,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         existing?.completion ?? List.filled(days, false),
                     comment: commentController.text,
                   );
-                  Navigator.pop(context, {
-                    'schedule': schedule,
-                    'index': index,
-                  });
+                  Navigator.pop(context, {'schedule': schedule, 'id': id});
                 }
               },
               child: Text(existing == null ? 'Add' : 'Update'),
@@ -181,36 +210,42 @@ class _SchedulePageState extends State<SchedulePage> {
       },
     ).then((result) async {
       if (result != null) {
-        final Schedule newSchedule = result['schedule'];
-        final int? i = result['index'];
-        if (i != null) {
-          await _firestoreService.updateSchedule(_scheduleIds[i], newSchedule);
-        } else {
-          await _firestoreService.addSchedule(newSchedule);
-          await NotificationService.showImmediateNotification(
-            'Schedule Added',
-            'You added "${newSchedule.title}" to your schedule.',
-          );
-          for (int d = 0; d < newSchedule.completion.length; d++) {
-            final date = newSchedule.startDate.add(Duration(days: d));
-            if (date.isAfter(DateTime.now())) {
-              await NotificationService.scheduleNotification(
-                date.millisecondsSinceEpoch ~/ 1000,
-                'Schedule Reminder',
-                'Today: ${newSchedule.title}',
-                DateTime(date.year, date.month, date.day, 8, 0),
-              );
-            }
+        final Schedule schedule = result['schedule'];
+        final String? scheduleId = result['id'];
+
+        try {
+          if (scheduleId != null) {
+            await _firestoreService.updateSchedule(scheduleId, schedule);
+          } else {
+            await _firestoreService.addSchedule(schedule);
+            await NotificationService.showImmediateNotification(
+              'Schedule Added',
+              'You added "${schedule.title}" to your schedule.',
+            );
+          }
+          await _fetchSchedules();
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error saving schedule: $e')),
+            );
           }
         }
-        await _fetchSchedules();
       }
     });
   }
 
-  void _deleteSchedule(int index) async {
-    await _firestoreService.deleteSchedule(_scheduleIds[index]);
-    await _fetchSchedules();
+  void _deleteSchedule(String id) async {
+    try {
+      await _firestoreService.deleteSchedule(id);
+      await _fetchSchedules();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting schedule: $e')));
+      }
+    }
   }
 
   Widget _buildDashboard() {
@@ -247,8 +282,9 @@ class _SchedulePageState extends State<SchedulePage> {
       prev = d;
     }
     // If last completion was not today, reset current streak
-    if (prev == null || prev.difference(DateTime.now()).inDays != 0)
+    if (prev == null || prev.difference(DateTime.now()).inDays != 0) {
       currentStreak = 0;
+    }
 
     // Upcoming tasks
     final now = DateTime.now();
@@ -466,7 +502,7 @@ class _SchedulePageState extends State<SchedulePage> {
                                                         schedule.completion[dayIdx] =
                                                             val!,
                                                   );
-                                                  // Update Firebase
+                                                  // Update API
                                                   await _firestoreService
                                                       .updateSchedule(
                                                         _scheduleIds[index],
@@ -480,7 +516,7 @@ class _SchedulePageState extends State<SchedulePage> {
                                       },
                                     ),
                                   ),
-                                  ButtonBar(
+                                  OverflowBar(
                                     alignment: MainAxisAlignment.spaceEvenly,
                                     children: [
                                       IconButton(
@@ -490,7 +526,7 @@ class _SchedulePageState extends State<SchedulePage> {
                                         ),
                                         onPressed: () => _addOrEditSchedule(
                                           existing: schedule,
-                                          index: index,
+                                          id: _scheduleIds[index],
                                         ),
                                       ),
                                       IconButton(
@@ -498,7 +534,9 @@ class _SchedulePageState extends State<SchedulePage> {
                                           Icons.delete,
                                           color: Colors.red,
                                         ),
-                                        onPressed: () => _deleteSchedule(index),
+                                        onPressed: () => _deleteSchedule(
+                                          _scheduleIds[index],
+                                        ),
                                       ),
                                       ElevatedButton.icon(
                                         icon: const Icon(Icons.sync),

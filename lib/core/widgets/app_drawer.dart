@@ -11,7 +11,7 @@ class AppDrawer extends StatefulWidget {
 
 class _AppDrawerState extends State<AppDrawer> {
   String? _profileImagePath;
-  String _userInitials = 'U'; // Replace with actual initials if available
+  final String _userInitials = 'U'; // Replace with actual initials if available
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -43,6 +43,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         )
                       : CircleAvatar(
                           radius: 40,
+                          backgroundColor: Colors.deepPurple,
                           child: Text(
                             _userInitials,
                             style: const TextStyle(
@@ -50,7 +51,6 @@ class _AppDrawerState extends State<AppDrawer> {
                               color: Colors.white,
                             ),
                           ),
-                          backgroundColor: Colors.deepPurple,
                         ),
                 ),
                 const SizedBox(height: 10),

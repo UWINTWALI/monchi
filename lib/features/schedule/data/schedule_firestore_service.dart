@@ -8,57 +8,71 @@ class ScheduleFirestoreService {
 
   String get _uid => _auth.currentUser!.uid;
 
-  CollectionReference get _scheduleRef =>
+  CollectionReference get scheduleRef =>
       _firestore.collection('users').doc(_uid).collection('schedules');
 
-  CollectionReference get scheduleRef => _scheduleRef;
-
   Future<List<Schedule>> getSchedules() async {
-    final snapshot = await _scheduleRef.get();
+    final snapshot = await scheduleRef.get();
     return snapshot.docs
-        .map(
-          (doc) => ScheduleFirestoreService.fromMap(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-          ),
-        )
+        .map((doc) => ScheduleFirestoreService.fromFirestore(doc))
         .toList();
   }
 
   Future<void> addSchedule(Schedule schedule) async {
-    await _scheduleRef.add(ScheduleFirestoreService.toMap(schedule));
+    try {
+      await scheduleRef.add({
+        'title': schedule.title,
+        'startDate': schedule.startDate.toIso8601String(),
+        'endDate': schedule.endDate.toIso8601String(),
+        'completion': schedule.completion,
+        'comment': schedule.comment,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error adding schedule: $e');
+      throw Exception('Failed to add schedule: $e');
+    }
   }
 
   Future<void> updateSchedule(String id, Schedule schedule) async {
-    await _scheduleRef.doc(id).set(ScheduleFirestoreService.toMap(schedule));
+    try {
+      await scheduleRef.doc(id).update({
+        'title': schedule.title,
+        'startDate': schedule.startDate.toIso8601String(),
+        'endDate': schedule.endDate.toIso8601String(),
+        'completion': schedule.completion,
+        'comment': schedule.comment,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating schedule: $e');
+      throw Exception('Failed to update schedule: $e');
+    }
   }
 
   Future<void> deleteSchedule(String id) async {
-    await _scheduleRef.doc(id).delete();
+    try {
+      await scheduleRef.doc(id).delete();
+    } catch (e) {
+      print('Error deleting schedule: $e');
+      throw Exception('Failed to delete schedule: $e');
+    }
   }
 
-  static Map<String, dynamic> toMap(Schedule schedule) {
-    return {
-      'title': schedule.title,
-      'startDate': schedule.startDate.toIso8601String(),
-      'endDate': schedule.endDate.toIso8601String(),
-      'completion': schedule.completion,
-      'comment': schedule.comment,
-    };
-  }
-
-  static Schedule fromMap(Map<String, dynamic> map, String? id) {
-    final startDate = DateTime.parse(map['startDate']);
-    final endDate = DateTime.parse(map['endDate']);
+  static Schedule fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final startDate = DateTime.parse(data['startDate']);
+    final endDate = DateTime.parse(data['endDate']);
     final days = endDate.difference(startDate).inDays + 1;
+
     return Schedule(
-      title: map['title'] ?? '',
+      title: data['title'] ?? '',
       startDate: startDate,
       endDate: endDate,
       completion: List<bool>.from(
-        map['completion'] ?? List.filled(days, false),
+        data['completion'] ?? List.filled(days, false),
       ),
-      comment: map['comment'],
+      comment: data['comment'],
     );
   }
 }

@@ -12,7 +12,7 @@ class SettingsPage extends StatelessWidget {
     final settings = Provider.of<SettingsProvider>(context);
     final theme = Theme.of(context);
 
-    TextStyle _getTextStyle({
+    TextStyle getTextStyle({
       required double fontSize,
       FontWeight? fontWeight,
     }) {
@@ -27,7 +27,7 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Settings',
-          style: _getTextStyle(fontSize: settings.fontSize),
+          style: getTextStyle(fontSize: settings.fontSize),
         ),
       ),
       body: Padding(
@@ -37,7 +37,7 @@ class SettingsPage extends StatelessWidget {
           children: [
             Text(
               'Theme',
-              style: _getTextStyle(
+              style: getTextStyle(
                 fontSize: settings.fontSize,
                 fontWeight: FontWeight.bold,
               ),
@@ -45,7 +45,7 @@ class SettingsPage extends StatelessWidget {
             ListTile(
               title: Text(
                 'System',
-                style: _getTextStyle(fontSize: settings.fontSize),
+                style: getTextStyle(fontSize: settings.fontSize),
               ),
               leading: Radio<ThemeMode>(
                 value: ThemeMode.system,
@@ -56,7 +56,7 @@ class SettingsPage extends StatelessWidget {
             ListTile(
               title: Text(
                 'Light',
-                style: _getTextStyle(fontSize: settings.fontSize),
+                style: getTextStyle(fontSize: settings.fontSize),
               ),
               leading: Radio<ThemeMode>(
                 value: ThemeMode.light,
@@ -67,7 +67,7 @@ class SettingsPage extends StatelessWidget {
             ListTile(
               title: Text(
                 'Dark',
-                style: _getTextStyle(fontSize: settings.fontSize),
+                style: getTextStyle(fontSize: settings.fontSize),
               ),
               leading: Radio<ThemeMode>(
                 value: ThemeMode.dark,
@@ -78,7 +78,7 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Font Size',
-              style: _getTextStyle(
+              style: getTextStyle(
                 fontSize: settings.fontSize,
                 fontWeight: FontWeight.bold,
               ),
@@ -89,15 +89,15 @@ class SettingsPage extends StatelessWidget {
               items: [
                 DropdownMenuItem(
                   value: 14.0,
-                  child: Text('Small', style: _getTextStyle(fontSize: 14.0)),
+                  child: Text('Small', style: getTextStyle(fontSize: 14.0)),
                 ),
                 DropdownMenuItem(
                   value: 16.0,
-                  child: Text('Medium', style: _getTextStyle(fontSize: 16.0)),
+                  child: Text('Medium', style: getTextStyle(fontSize: 16.0)),
                 ),
                 DropdownMenuItem(
                   value: 20.0,
-                  child: Text('Large', style: _getTextStyle(fontSize: 20.0)),
+                  child: Text('Large', style: getTextStyle(fontSize: 20.0)),
                 ),
               ],
               onChanged: (value) {

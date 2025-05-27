@@ -131,12 +131,12 @@ class _SigninPageState extends State<SigninPage> {
         throw Exception('Please fill in all fields');
       }
 
-      final user = await _authRepository.signInWithEmail(
+      final response = await _authRepository.signInWithEmail(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      if (user != null) {
+      if (response.containsKey('token')) {
         // Successfully signed in
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/main');
