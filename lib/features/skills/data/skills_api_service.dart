@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/config/env_config.dart'; // <-- Import EnvConfig
 
 class SkillsApiService {
   final Dio _dio = Dio();
-  static const String _baseUrl = 'http://172.31.30.73:3000/api';
+  static String get _baseUrl => EnvConfig.apiBaseUrl; // Use EnvConfig
   static const String _tokenKey = 'auth_token';
 
   Future<String?> _getToken() async {

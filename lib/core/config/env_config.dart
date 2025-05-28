@@ -1,5 +1,5 @@
 class EnvConfig {
-  static String _apiBaseUrl = 'http://172.31.30.73:3000/api'; // Default value
+  static String _apiBaseUrl = 'http://10.0.2.2:3000/api'; // Defined ONCE here
 
   static String get apiBaseUrl => _apiBaseUrl;
 
@@ -8,12 +8,12 @@ class EnvConfig {
   }
 
   static void initializeDevConfig() {
-    // You can add more environment-specific configurations here
-    setApiBaseUrl('http://172.31.30.73:3000/api');
+    // Uncomment and set if you want a different dev URL
+    // setApiBaseUrl('http://your-dev-api-url/api');
   }
 
   static void initializeProdConfig() {
-    // Production configuration can be set here
-    setApiBaseUrl('https://your-production-api.com/api');
+    // Uncomment and set if you want a different prod URL
+    // setApiBaseUrl('https://your-production-api.com/api');
   }
 }
