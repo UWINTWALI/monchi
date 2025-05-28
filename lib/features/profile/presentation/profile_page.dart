@@ -66,7 +66,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
+      return;
+    }
 
     setState(() {
       _error = null;
@@ -77,17 +80,36 @@ class _ProfilePageState extends State<ProfilePage> {
         throw Exception('Profile not loaded');
       }
 
+      print('Saving profile with values:');
+      print('Username: ${_usernameController.text}');
+      print('First Name: ${_firstNameController.text}');
+      print('Last Name: ${_lastNameController.text}');
+      print('Date of Birth: ${_dateOfBirthController.text}');
+      print('Gender: $_gender');
+      print('Bio: ${_bioController.text}');
+
+      // Parse the date and create a UTC date at noon to avoid timezone issues
+      DateTime? parsedDate;
+      if (_dateOfBirthController.text.isNotEmpty) {
+        final localDate = DateTime.parse(_dateOfBirthController.text);
+        parsedDate = DateTime.utc(
+          localDate.year,
+          localDate.month,
+          localDate.day,
+          12, // Use noon UTC to avoid any date shifting
+        );
+        print('Parsed date in UTC: $parsedDate');
+      }
+
       final profile = UserProfile(
         uid: _currentProfile!.uid,
         email: _currentProfile!.email,
-        username: _currentProfile!.username,
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        dateOfBirth: _dateOfBirthController.text.isNotEmpty
-            ? DateTime.parse(_dateOfBirthController.text)
-            : null,
+        username: _usernameController.text.trim().toLowerCase(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        dateOfBirth: parsedDate,
         gender: _gender,
-        bio: _bioController.text.isEmpty ? null : _bioController.text,
+        bio: _bioController.text.isEmpty ? null : _bioController.text.trim(),
         profilePicture: _currentProfile!.profilePicture,
         interests: _currentProfile!.interests,
         skills: _currentProfile!.skills,
@@ -102,8 +124,11 @@ class _ProfilePageState extends State<ProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
         );
+        // Reload the profile to verify changes
+        await _loadUserProfile();
       }
     } catch (e) {
+      print('Error saving profile: $e');
       setState(() {
         _error = e.toString();
       });
@@ -166,14 +191,36 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: const InputDecoration(
                           labelText: 'Username',
                           border: OutlineInputBorder(),
+                          hintText: 'Enter your username',
+                          helperText:
+                              'Username can only contain letters, numbers, and underscores',
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your username';
                           }
+                          if (value.length < 3) {
+                            return 'Username must be at least 3 characters';
+                          }
+                          if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+                            return 'Username can only contain letters, numbers, and underscores';
+                          }
                           return null;
                         },
-                        readOnly: true,
+                        onChanged: (value) {
+                          // Remove any whitespace and convert to lowercase
+                          if (value.contains(' ') ||
+                              value != value.toLowerCase()) {
+                            final newValue = value
+                                .replaceAll(' ', '_')
+                                .toLowerCase();
+                            _usernameController.text = newValue;
+                            _usernameController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: newValue.length),
+                                );
+                          }
+                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -182,12 +229,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           labelText: 'First Name',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your first name';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -196,12 +237,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           labelText: 'Last Name',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your last name';
-                          }
-                          return null;
-                        },
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -212,6 +247,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           hintText: 'YYYY-MM-DD',
                         ),
                         readOnly: true,
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            try {
+                              DateTime.parse(value);
+                            } catch (e) {
+                              return 'Please enter a valid date in YYYY-MM-DD format';
+                            }
+                          }
+                          return null;
+                        },
                         onTap: () async {
                           FocusScope.of(context).requestFocus(FocusNode());
                           final DateTime? picked = await showDatePicker(
@@ -223,29 +268,32 @@ class _ProfilePageState extends State<ProfilePage> {
                             lastDate: DateTime.now(),
                           );
                           if (picked != null) {
+                            print('Selected date: $picked');
+                            final formattedDate = DateFormat(
+                              'yyyy-MM-dd',
+                            ).format(picked);
+                            print('Formatted date: $formattedDate');
                             setState(() {
-                              _dateOfBirthController.text = DateFormat(
-                                'yyyy-MM-dd',
-                              ).format(picked);
+                              _dateOfBirthController.text = formattedDate;
                             });
                           }
                         },
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _gender,
+                        value: _gender?.toLowerCase(),
                         decoration: const InputDecoration(
                           labelText: 'Gender',
                           border: OutlineInputBorder(),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'Male', child: Text('Male')),
+                          DropdownMenuItem(value: 'male', child: Text('Male')),
                           DropdownMenuItem(
-                            value: 'Female',
+                            value: 'female',
                             child: Text('Female'),
                           ),
                           DropdownMenuItem(
-                            value: 'Other',
+                            value: 'other',
                             child: Text('Other'),
                           ),
                         ],

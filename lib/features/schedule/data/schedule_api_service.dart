@@ -4,7 +4,7 @@ import '../presentation/schedule_page.dart';
 
 class ScheduleApiService {
   final Dio _dio = Dio();
-  static const String _baseUrl = 'http://10.0.2.2:3000/api';
+  static const String _baseUrl = 'http://172.31.30.73:3000/api';
   static const String _tokenKey = 'auth_token';
 
   Future<String?> _getToken() async {

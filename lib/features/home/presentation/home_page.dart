@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../profile/data/user_api_service.dart';
 // import '../../dashboard/presentation/emotion_dashboard_page.dart';
 // import '../../profile/presentation/profile_page.dart';
 // import '../../about/about_page.dart';
@@ -22,8 +23,43 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _MainHomeBody extends StatelessWidget {
+class _MainHomeBody extends StatefulWidget {
   const _MainHomeBody();
+
+  @override
+  State<_MainHomeBody> createState() => _MainHomeBodyState();
+}
+
+class _MainHomeBodyState extends State<_MainHomeBody> {
+  final _userApiService = UserApiService();
+  bool _isLoading = true;
+  String? _firstName;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await _userApiService.getUserProfile();
+      if (mounted) {
+        setState(() {
+          _firstName = profile.firstName;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +68,24 @@ class _MainHomeBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            ),
           // Greeting Section
-          const Text(
-            'Hey [UserName], I missed you :-)!',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+          _isLoading
+              ? const SizedBox(
+                  height: 36,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : Text(
+                  'Hey ${_firstName ?? 'there'}, I missed you!',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
           const SizedBox(height: 20),
           // Mochi Avatar
           Center(

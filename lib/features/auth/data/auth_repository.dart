@@ -16,7 +16,7 @@ class AuthRepository {
   ) async {
     try {
       print(
-        'Attempting to login with URL: http://10.0.2.2:3000/api/auth/login',
+        'Attempting to login with URL: http://172.31.30.73:3000/api/auth/login',
       );
 
       // First, authenticate with Firebase to maintain Firestore access
@@ -27,7 +27,8 @@ class AuthRepository {
 
       // Then authenticate with custom API
       final response = await _dio.post(
-        'http://10.0.2.2:3000/api/auth/login',
+        // 'http://10.0.2.2:3000/api/auth/login',
+        'http://172.31.30.73:3000/api/auth/login',
         data: {'email': email, 'password': password},
         options: Options(
           validateStatus: (status) => true,
