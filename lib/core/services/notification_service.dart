@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import '../services/firebase_messaging_service.dart';
+import 'package:flutter/foundation.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -15,6 +17,24 @@ class NotificationService {
       android: androidSettings,
     );
     await _notifications.initialize(settings);
+  }
+
+  // Get FCM token for the current device
+  static Future<String?> getFcmToken() async {
+    return await FirebaseMessagingService.getFcmToken();
+  }
+
+  // Save FCM token to your backend (you can extend this to send to your server)
+  static Future<void> saveFcmTokenToBackend() async {
+    final token = await getFcmToken();
+    if (token != null) {
+      if (kDebugMode) {
+        print('FCM token to save to backend: $token');
+      }
+      // Here you would typically send the token to your backend
+      // Example API call:
+      // await ApiService.saveFcmToken(token);
+    }
   }
 
   static Future<void> showImmediateNotification(
@@ -62,9 +82,10 @@ class NotificationService {
 
   static Future<void> requestPermission() async {
     if (Platform.isAndroid) {
-      final androidImplementation =
-          _notifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      final androidImplementation = _notifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       // Only available on Android 13+
       await androidImplementation?.requestNotificationsPermission();
     }

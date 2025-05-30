@@ -104,6 +104,19 @@ class SettingsPage extends StatelessWidget {
                 if (value != null) {
                   settings.setFontSize(value);
                 }
+              },            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
+            ListTile(
+              title: Text(
+                'Test FCM Notifications',
+                style: getTextStyle(fontSize: settings.fontSize),
+              ),
+              subtitle: const Text('Get FCM token and test notifications'),
+              leading: const Icon(Icons.notifications),
+              onTap: () {
+                Navigator.pushNamed(context, '/fcm_test');
               },
             ),
           ],

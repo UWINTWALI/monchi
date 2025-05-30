@@ -17,13 +17,30 @@ import 'package:provider/provider.dart';
 import 'core/settings/settings_provider.dart';
 import 'features/about/about_page.dart';
 import 'features/schedule/presentation/schedule_page.dart';
+import 'features/fcm_test/presentation/fcm_test_page.dart';
 import 'core/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/services/fcm_helper.dart';
+
+// Handle background messages received when the app is terminated
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Background message received: ${message.messageId}');
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await NotificationService.initialize();
   await NotificationService.requestPermission();
+
+  // Initialize Firebase Cloud Messaging service
+  await FCMHelper.initialize();
+
   runApp(const MyApp());
 }
 
@@ -57,8 +74,7 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: settings.themeMode,
             initialRoute: '/',
-            routes: {
-              '/': (_) => const WelcomePage(),
+            routes: {              '/': (_) => const WelcomePage(),
               '/forgot-password': (_) => const ForgotPasswordPage(),
               '/otp': (_) => const OTPVerificationPage(),
               '/reset-password': (_) => const ResetPasswordPage(),
@@ -72,6 +88,7 @@ class MyApp extends StatelessWidget {
               '/settings': (_) => const SettingsPage(),
               '/about': (_) => const AboutPage(),
               '/schedule': (_) => const SchedulePage(),
+              '/fcm_test': (_) => const FCMTestPage(),
             },
           );
         },
