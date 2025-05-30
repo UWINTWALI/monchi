@@ -28,4 +28,25 @@ class AuthApiService {
       throw Exception('Login error: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getUserInfo(String token, String userId) async {
+    try {
+      final response = await _dio.get(
+        '${EnvConfig.apiBaseUrl}/users/$userId',  // Updated endpoint
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      throw Exception('Failed to get user info');
+    } catch (e) {
+      throw Exception('Error getting user info: $e');
+    }
+  }
 }
