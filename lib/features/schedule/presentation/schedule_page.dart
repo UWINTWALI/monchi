@@ -28,9 +28,7 @@ class Schedule {
       title: json['title'] ?? '',
       startDate: startDate,
       endDate: endDate,
-      completion: List<bool>.from(
-        json['completion'] ?? List.filled(days, false),
-      ),
+      completion: List<bool>.from(json['completion'] ?? List.filled(days, false)),
       comment: json['comment'],
     );
   }
@@ -79,9 +77,8 @@ class _SchedulePageState extends State<SchedulePage> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading schedules: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading schedules: $e')));
       }
     } finally {
       setState(() => _loading = false);
@@ -158,8 +155,7 @@ class _SchedulePageState extends State<SchedulePage> {
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: context,
-                                initialDate:
-                                    (endDate != null && startDate != null)
+                                initialDate: (endDate != null && startDate != null)
                                     ? (!endDate!.isBefore(startDate!)
                                           ? endDate!
                                           : startDate!)
@@ -196,8 +192,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     title: titleController.text,
                     startDate: startDate!,
                     endDate: endDate!,
-                    completion:
-                        existing?.completion ?? List.filled(days, false),
+                    completion: existing?.completion ?? List.filled(days, false),
                     comment: commentController.text,
                   );
                   Navigator.pop(context, {'schedule': schedule, 'id': id});
@@ -216,11 +211,15 @@ class _SchedulePageState extends State<SchedulePage> {
         try {
           if (scheduleId != null) {
             await _firestoreService.updateSchedule(scheduleId, schedule);
+            await NotificationService.showImmediateNotification(
+              'Schedule Updated',
+              'Your schedule "${schedule.title}" has been updated.',
+            );
           } else {
             await _firestoreService.addSchedule(schedule);
             await NotificationService.showImmediateNotification(
               'Schedule Added',
-              'You added "${schedule.title}" to your schedule.',
+              'Your schedule "${schedule.title}" has been registered!',
             );
           }
           await _fetchSchedules();
@@ -237,13 +236,18 @@ class _SchedulePageState extends State<SchedulePage> {
 
   void _deleteSchedule(String id) async {
     try {
+      final scheduleIndex = _scheduleIds.indexOf(id);
+      final scheduleTitle = scheduleIndex != -1 ? _schedules[scheduleIndex].title : 'Schedule';
       await _firestoreService.deleteSchedule(id);
+      await NotificationService.showImmediateNotification(
+        'Schedule Deleted',
+        'Your schedule "$scheduleTitle" has been deleted.',
+      );
       await _fetchSchedules();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting schedule: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error deleting schedule: $e')));
       }
     }
   }
@@ -369,9 +373,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     'Upcoming Tasks',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  ...upcoming
-                      .take(3)
-                      .map(
+                  ...upcoming.take(3).map(
                         (e) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
@@ -397,8 +399,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 ..._schedules.map((s) {
                   final percent = s.completion.isEmpty
                       ? 0
-                      : s.completion.where((c) => c).length /
-                            s.completion.length;
+                      : s.completion.where((c) => c).length / s.completion.length;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
@@ -409,9 +410,7 @@ class _SchedulePageState extends State<SchedulePage> {
                           child: LinearProgressIndicator(
                             value: percent.toDouble(),
                             backgroundColor: Colors.grey[200],
-                            valueColor: AlwaysStoppedAnimation(
-                              Colors.pinkAccent,
-                            ),
+                            valueColor: AlwaysStoppedAnimation(Colors.pinkAccent),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -439,23 +438,14 @@ class _SchedulePageState extends State<SchedulePage> {
                 _buildDashboard(),
                 Expanded(
                   child: _schedules.isEmpty
-                      ? const Center(
-                          child: Text('📭 No schedules yet. Add one!'),
-                        )
+                      ? const Center(child: Text('📭 No schedules yet. Add one!'))
                       : ListView.builder(
                           itemCount: _schedules.length,
                           itemBuilder: (context, index) {
                             final schedule = _schedules[index];
-                            final days =
-                                schedule.endDate
-                                    .difference(schedule.startDate)
-                                    .inDays +
-                                1;
-                            final completed = schedule.completion
-                                .where((c) => c)
-                                .length;
-                            final percent = (completed / days * 100)
-                                .toStringAsFixed(0);
+                            final days = schedule.endDate.difference(schedule.startDate).inDays + 1;
+                            final completed = schedule.completion.where((c) => c).length;
+                            final percent = (completed / days * 100).toStringAsFixed(0);
                             return Card(
                               margin: const EdgeInsets.all(10),
                               child: ExpansionTile(
@@ -467,8 +457,7 @@ class _SchedulePageState extends State<SchedulePage> {
                                       '📅 ${DateFormat('yyyy-MM-dd').format(schedule.startDate)} → ${DateFormat('yyyy-MM-dd').format(schedule.endDate)}',
                                     ),
                                     Text('✅ Progress: $percent%'),
-                                    if (schedule.comment != null &&
-                                        schedule.comment!.isNotEmpty)
+                                    if (schedule.comment != null && schedule.comment!.isNotEmpty)
                                       Text('🗒️ Comment: ${schedule.comment!}'),
                                   ],
                                 ),
@@ -479,35 +468,17 @@ class _SchedulePageState extends State<SchedulePage> {
                                       scrollDirection: Axis.horizontal,
                                       itemCount: days,
                                       itemBuilder: (context, dayIdx) {
-                                        final date = schedule.startDate.add(
-                                          Duration(days: dayIdx),
-                                        );
+                                        final date = schedule.startDate.add(Duration(days: dayIdx));
                                         return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6),
                                           child: Column(
                                             children: [
-                                              Text(
-                                                DateFormat(
-                                                  'MM/dd',
-                                                ).format(date),
-                                              ),
+                                              Text(DateFormat('MM/dd').format(date)),
                                               Checkbox(
-                                                value:
-                                                    schedule.completion[dayIdx],
+                                                value: schedule.completion[dayIdx],
                                                 onChanged: (val) async {
-                                                  setState(
-                                                    () =>
-                                                        schedule.completion[dayIdx] =
-                                                            val!,
-                                                  );
-                                                  // Update API
-                                                  await _firestoreService
-                                                      .updateSchedule(
-                                                        _scheduleIds[index],
-                                                        schedule,
-                                                      );
+                                                  setState(() => schedule.completion[dayIdx] = val!);
+                                                  await _firestoreService.updateSchedule(_scheduleIds[index], schedule);
                                                 },
                                               ),
                                             ],
@@ -520,54 +491,31 @@ class _SchedulePageState extends State<SchedulePage> {
                                     alignment: MainAxisAlignment.spaceEvenly,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.blue,
-                                        ),
+                                        icon: const Icon(Icons.edit, color: Colors.blue),
                                         onPressed: () => _addOrEditSchedule(
                                           existing: schedule,
                                           id: _scheduleIds[index],
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () => _deleteSchedule(
-                                          _scheduleIds[index],
-                                        ),
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => _deleteSchedule(_scheduleIds[index]),
                                       ),
                                       ElevatedButton.icon(
                                         icon: const Icon(Icons.sync),
                                         label: const Text('Sync to Google'),
                                         onPressed: () async {
                                           try {
-                                            await GoogleCalendarService()
-                                                .addScheduleToCalendar(
-                                                  schedule,
-                                                );
+                                            await GoogleCalendarService().addScheduleToCalendar(schedule);
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Synced to Google Calendar!',
-                                                  ),
-                                                ),
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Synced to Google Calendar!')),
                                               );
                                             }
                                           } catch (e) {
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Failed to sync: $e',
-                                                  ),
-                                                ),
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Failed to sync: $e')),
                                               );
                                             }
                                           }
