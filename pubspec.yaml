@@ -46,6 +46,8 @@ dependencies:
   googleapis_auth: ^2.0.0
   dio: ^5.4.1
   shared_preferences: ^2.2.2
+  firebase_messaging: ^14.7.4
+
 
 dev_dependencies:
   flutter_test:

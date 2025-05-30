@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'features/onboarding/presentation/welcome_page.dart';
 import 'features/auth/presentation/forgot_password_page.dart';
@@ -21,10 +22,16 @@ import 'core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp();
   await NotificationService.initialize();
-  await NotificationService.requestPermission();
-  runApp(const MyApp());
+  
+  // Print FCM token for testing
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  print('\n=== FCM TOKEN FOR TESTING ===');
+  print(fcmToken);
+  print('============================\n');
+  
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
